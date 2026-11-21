@@ -16,7 +16,8 @@ export function sayWord(w) {
 // Kan netop dette ord læses op (indspillet klip eller enhedens danske stemme)?
 export const canSpeak = w => save.settings.voice && canSay(wordParts(w));
 
-function sentenceEl(w, blank = '______') {
+function sentenceEl(w, len = 6) {
+  const blank = '_'.repeat(len);
   if (!w.sentence) return h('div', { class: 'sentence' }, 'Stav ordet:');
   const [a, b] = w.sentence.split('___');
   const cap = !a;
@@ -55,7 +56,7 @@ function askChoice(q, header, hint, label) {
       render();
     } : null;
     function render() {
-      setPanel(header, topRow(w, { hints: hint ? hint.count() : 0, onHint, label: label || 'Vælg det rigtige bogstav' }), sentenceEl(w), wordEl, h('div', { class: 'opts' }, btns));
+      setPanel(header, topRow(w, { hints: hint ? hint.count() : 0, onHint, label: label || 'Vælg det rigtige bogstav' }), sentenceEl(w, w.pre.length + 1 + w.post.length), wordEl, h('div', { class: 'opts' }, btns));
     }
     function choose(o, b) {
       if (done) return; done = true;

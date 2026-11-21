@@ -126,7 +126,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
 .q-top { display: flex; gap: 8px; align-items: center; }
 .q-label { flex: 1; font-family: var(--pix); font-size: 10px; color: var(--gold); line-height: 1.5; }
 .sentence { font-size: 25px; text-align: center; color: #e8e8ff; padding: 2px 4px; }
-.blank { display: inline-block; color: var(--lblue); letter-spacing: 1px; }
+.blank { display: inline-block; color: var(--lblue); letter-spacing: 3px; }
 .word { font-family: var(--pix); font-size: clamp(22px, 7.5vw, 34px); text-align: center; letter-spacing: 3px; padding: 10px 0; word-break: break-all; }
 .word.big { color: var(--gold); text-shadow: 3px 3px 0 #000; }
 .word.ok { color: var(--lgreen); }
