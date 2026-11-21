@@ -32,6 +32,30 @@ Then on GitHub, go to **Settings → Pages → Build and deployment**, set **Sou
    Without one, the game briefly flashes the word and then hides it instead.
 3. Check **⚙️ Indstillinger → Test stemmen** in the game menu.
 
+## Read-aloud voice (Oplæsning)
+
+All game words, example sentences and story lines are pre-recorded in `audio/` (about 420 MP3 clips, 4.4 MB) with
+[Piper](https://github.com/rhasspy/piper), using the Danish voice `da_DK-talesyntese-medium`, which was trained
+on a CC0 dataset. Every device hears the same voice, and dictation works offline and on devices that have no
+Danish voice installed. Custom words ("Egne ord") and story lines containing the hero's name fall back to the
+device's own voice.
+
+**When you change words or story**, regenerate the audio. It only builds clips that are missing and deletes
+unused ones:
+
+```bash
+node tools/make_audio.mjs          # add --all to rebuild everything
+```
+
+**One-time setup** (Piper binary plus the Danish voice in `~/.local/share/piper`; needs `ffmpeg`):
+
+```bash
+D=~/.local/share/piper; mkdir -p $D && cd $D
+curl -L https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz | tar xz
+V=https://huggingface.co/rhasspy/piper-voices/resolve/main/da/da_DK/talesyntese/medium
+curl -LO $V/da_DK-talesyntese-medium.onnx -LO $V/da_DK-talesyntese-medium.onnx.json
+```
+
 ## Run locally
 
 ```bash

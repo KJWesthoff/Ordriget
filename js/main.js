@@ -1,7 +1,7 @@
 import { W, H, SCALE } from './gfx.js';
 import * as fx from './fx.js';
 import { getScene } from './scene.js';
-import { initAudio, unlockSpeech, setAudioPrefs, setRate } from './audio.js';
+import { initAudio, unlockSpeech, setAudioPrefs, setRate, loadClips } from './audio.js';
 import { load, save } from './state.js';
 import { onMenu } from './ui.js';
 import { toTitle, openMenu } from './flow.js';
@@ -58,6 +58,7 @@ if (load()) {
   setRate(save.settings.rate);
 }
 onMenu(openMenu);
+loadClips();
 
 const start = () => { toTitle(); requestAnimationFrame(frame); };
 if (document.fonts && document.fonts.load) {

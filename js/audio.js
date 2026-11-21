@@ -163,14 +163,83 @@ export function unlockSpeech() {
   try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch (e) { /* ignorer */ }
 }
 
+// ---------- Indspillede klip (Piper) ----------
+// audio/index.json: { voice, files: { "tekst": "abc123.mp3" } } – laves af tools/make_audio.mjs
+let clips = null, clipVoice = null;
+const bufCache = new Map();
+let voiceGain = null, playing = [], seqId = 0;
+const clipKey = t => String(t).replace(/[«»"]/g, '').replace(/\s+/g, ' ').trim();
+
+export async function loadClips() {
+  try {
+    const r = await fetch('audio/index.json');
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    clips = j.files || {}; clipVoice = j.voice || null;
+  } catch (e) { clips = {}; }
+}
+export function clipVoiceName() { return clips && Object.keys(clips).length ? clipVoice : null; }
+const hasClips = parts => !!clips && parts.every(p => clips[clipKey(p)]);
+
+// Kan spillet læse disse tekster op – enten med klip eller enhedens danske stemme?
+export function canSay(parts) { parts = [].concat(parts); return hasClips(parts) || hasVoice(); }
+
+function getBuf(file) {
+  if (!bufCache.has(file)) {
+    bufCache.set(file, fetch('audio/' + file).then(r => r.arrayBuffer())
+      .then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)))
+      .catch(e => { bufCache.delete(file); throw e; }));
+  }
+  return bufCache.get(file);
+}
+
+async function playClips(parts) {
+  const id = ++seqId;
+  let bufs;
+  try { bufs = await Promise.all(parts.map(p => getBuf(clips[clipKey(p)]))); }
+  catch (e) { if (id === seqId) speakTTS(parts); return; }
+  if (id !== seqId) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  if (!voiceGain) { voiceGain = ctx.createGain(); voiceGain.gain.value = 1; voiceGain.connect(ctx.destination); }
+  // tempo-skyderen: 0.85 = normal. Små ændringer, så stemmen ikke bliver for dyb/lys.
+  const pr = Math.min(1.15, Math.max(0.8, rate / 0.85));
+  let t = ctx.currentTime + 0.05;
+  if (musicGain && prefs.music) musicGain.gain.setTargetAtTime(0.08, ctx.currentTime, 0.05);
+  for (const b of bufs) {
+    const src = ctx.createBufferSource();
+    src.buffer = b; src.playbackRate.value = pr;
+    src.connect(voiceGain);
+    src.start(t);
+    playing.push(src);
+    t += b.duration / pr + 0.45;
+  }
+  const end = t;
+  setTimeout(() => { if (id === seqId) restoreMusic(); }, (end - ctx.currentTime) * 1000);
+}
+function restoreMusic() { if (musicGain) musicGain.gain.setTargetAtTime(prefs.music ? 0.32 : 0, ctx.currentTime, 0.2); }
+
 export function speak(parts) {
+  parts = [].concat(parts).filter(Boolean);
+  stopSpeech();
+  if (ctx && hasClips(parts)) { playClips(parts); return true; }
+  return speakTTS(parts);
+}
+
+function speakTTS(parts) {
   if (!hasVoice()) return false;
   speechSynthesis.cancel();
-  for (const p of [].concat(parts)) {
+  for (const p of parts) {
     const u = new SpeechSynthesisUtterance(p);
     u.voice = daVoice; u.lang = daVoice.lang; u.rate = rate;
     speechSynthesis.speak(u);
   }
   return true;
 }
-export function stopSpeech() { if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+
+export function stopSpeech() {
+  seqId++;
+  for (const s of playing) { try { s.stop(); } catch (e) { /* allerede stoppet */ } }
+  playing = [];
+  if (ctx) restoreMusic();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+}

@@ -1,6 +1,6 @@
 import { h, btn, setPanel, hud, toast, bigCanvas, modal } from '../ui.js';
 import { save, persist, wipe, exportCode, importCode, today } from '../state.js';
-import { sfx, speak, setAudioPrefs, setRate, voiceName, hasVoice, music } from '../audio.js';
+import { sfx, speak, setAudioPrefs, setRate, voiceName, clipVoiceName } from '../audio.js';
 import { ITEMS, CHAPTERS, ABILITIES, heroStats, xpToNext } from '../data/game.js';
 import { WORDS, mastery, customWords } from '../learn.js';
 import { heroCanvas, petCanvas, sprite } from '../gfx.js';
@@ -150,7 +150,8 @@ function settings(onBack) {
     toggle('🗣️ Dansk oplæsning af ord', 'voice'),
     toggle('📜 Læs historien højt', 'readStory'),
     h('div', { class: 'setting' }, h('span', {}, '🐢 Talehastighed 🐇'), rate),
-    h('div', { class: 'voice-status ' + (vn ? 'ok' : 'bad') }, vn ? `✓ Dansk stemme fundet: ${vn}` : '✗ Ingen dansk stemme fundet. Ordene vises kort i stedet. (Se Forældre-siden for hjælp.)'),
+    clipVoiceName() ? h('div', { class: 'voice-status ok' }, '✓ Spillets ord læses op med indbygget stemme (' + clipVoiceName() + ')') : null,
+    h('div', { class: 'voice-status ' + (vn ? 'ok' : 'bad') }, vn ? `✓ Enhedens danske stemme: ${vn} (bruges til egne ord)` : '✗ Enheden har ingen dansk stemme – egne ord vises kort i stedet for at blive læst op.'),
     btn('🔊 Test stemmen', () => { if (!speak(['søster', 'Min søster hedder Ida.'])) toast('Ingen dansk stemme'); }, 'small'),
     btn('◀ Tilbage', onBack, 'small'),
   );
@@ -189,7 +190,7 @@ function parents(onBack) {
     ta,
     btn('Gem egne ord', () => { save.custom = cleanCustom(ta.value); ta.value = save.custom.join('\n'); persist(); toast(`Gemt: ${save.custom.length} ord`); }, 'primary small'),
     h('div', { class: 'label' }, 'Dansk oplæsning'),
-    h('p', { class: 'small' }, vn ? `Stemme: ${vn}. ` : 'Ingen dansk stemme fundet. ', 'På iPhone: Indstillinger → Tilgængelighed → Oplæst indhold → Stemmer → Dansk → hent "Sara (forbedret)". Genstart derefter spillet.'),
+    h('p', { class: 'small' }, 'Alle spillets ord, sætninger og historien har indbygget oplæsning (Piper). Egne ord læses med enhedens stemme: ', vn ? `${vn}. ` : 'ingen dansk stemme fundet. ', 'På iPhone: Indstillinger → Tilgængelighed → Oplæst indhold → Stemmer → Dansk → hent "Sara (forbedret)".'),
     h('div', { class: 'label' }, 'Sikkerhedskopi'),
     h('p', { class: 'small dim' }, 'Safari kan slette data fra hjemmesider, der ikke bruges i 7 dage. Føj spillet til hjemmeskærmen, og gem en kode her en gang imellem.'),
     h('div', { class: 'row' },

@@ -1,20 +1,20 @@
 // Spørgsmål: valg af bogstav, valg af stavemåde, diktat, ret fejlen, ordpuslespil
 // og "Se – Dæk – Skriv – Tjek" efter en fejl.
 import { h, btn, setPanel, keyboard, detachKeyboard } from './ui.js';
-import { speak, hasVoice, sfx, stopSpeech } from './audio.js';
+import { speak, canSay, sfx, stopSpeech } from './audio.js';
 import { sentenceWith, shuffle } from './learn.js';
 import { tipFor } from './data/words.js';
 import { save } from './state.js';
 
 const show = s => (s === '' ? '(intet)' : s);
 
+const wordParts = w => (w.sentence ? [w.word, sentenceWith(w, w.word)] : [w.word]);
 export function sayWord(w) {
   if (!save.settings.voice) return false;
-  const parts = [w.word];
-  if (w.sentence) parts.push(sentenceWith(w, w.word));
-  return speak(parts);
+  return speak(wordParts(w));
 }
-export const canSpeak = () => save.settings.voice && hasVoice();
+// Kan netop dette ord læses op (indspillet klip eller enhedens danske stemme)?
+export const canSpeak = w => save.settings.voice && canSay(wordParts(w));
 
 function sentenceEl(w, blank = '______') {
   if (!w.sentence) return h('div', { class: 'sentence' }, 'Stav ordet:');
@@ -26,7 +26,7 @@ function sentenceEl(w, blank = '______') {
 function topRow(w, { hints, onHint, label }) {
   return h('div', { class: 'q-top' },
     h('div', { class: 'q-label' }, label || ''),
-    canSpeak() ? h('button', { class: 'icon-btn', onclick: () => sayWord(w), title: 'Hør igen' }, '🔊') : null,
+    canSpeak(w) ? h('button', { class: 'icon-btn', onclick: () => sayWord(w), title: 'Hør igen' }, '🔊') : null,
     onHint ? h('button', { class: 'icon-btn hint', onclick: onHint, disabled: hints <= 0 ? true : null }, '🪶', h('small', {}, String(hints))) : null,
   );
 }
@@ -104,7 +104,7 @@ function askPick(q, header, hint, label) {
 function askType(q, header, hint, label) {
   return new Promise(resolve => {
     const w = q.w; let typed = '', done = false, hinted = false, revealed = 0;
-    const voice = canSpeak();
+    const voice = canSpeak(w);
     const slotsEl = h('div', { class: 'slots' });
     const msg = h('div', { class: 'q-msg' });
     function drawSlots(state) {
@@ -218,7 +218,7 @@ export function correction(w, { typed = null } = {}) {
         w.en ? h('div', { class: 'bridge' }, h('span', { class: 'flag' }, 'EN'), ' ' + w.en, ' → ', h('b', {}, w.word)) : null,
         h('div', { class: 'tip' }, '💡 ' + tipFor(w)),
         h('div', { class: 'row' },
-          canSpeak() ? h('button', { class: 'icon-btn', onclick: () => sayWord(w) }, '🔊') : null,
+          canSpeak(w) ? h('button', { class: 'icon-btn', onclick: () => sayWord(w) }, '🔊') : null,
           btn('Jeg har kigget godt ✓', cover, 'primary grow'),
         ),
       );
