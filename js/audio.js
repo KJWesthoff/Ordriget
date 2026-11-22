@@ -80,6 +80,12 @@ export function sfx(name) {
     case 'defeat': seq(['G4', 'F4', 'E4', 'D4', 'C4'], 0.18, 'triangle', 0.2); break;
     case 'open': seq(['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5', 'C6'], 0.05, 'square', 0.1); break;
     case 'step': tone(140, t, 0.03, 'triangle', 0.1); break;
+    case 'spin': for (let i = 0; i < 4; i++) { noise(t + i * 0.1, 0.08, 0.15); tone(500 + i * 120, t + i * 0.1, 0.08, 'triangle', 0.1, sfxGain, 300); } break;
+    case 'rune': tone(220, t, 0.5, 'triangle', 0.15, sfxGain, 880); seq(['E5', 'B5', 'E6'], 0.12, 'triangle', 0.12); break;
+    case 'storm': noise(t, 0.6, 0.2); tone(120, t, 0.6, 'sawtooth', 0.08, sfxGain, 600); break;
+    case 'parry': tone(1400, t, 0.08, 'square', 0.1); tone(1800, t + 0.06, 0.15, 'triangle', 0.12, sfxGain, 900); break;
+    case 'unlock': tone(600, t, 0.04, 'square', 0.1); tone(300, t + 0.05, 0.06, 'square', 0.1); seq([null, 'C6', 'G6'], 0.07, 'square', 0.1); break;
+    case 'clunk': noise(t, 0.12, 0.25); tone(110, t, 0.15, 'square', 0.1, sfxGain, 70); break;
   }
 }
 

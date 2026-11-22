@@ -1,9 +1,9 @@
-import { W, H, text, sprite, heroCanvas, rng } from '../gfx.js';
+import { W, H, text, sprite, heroCanvas, rng, glow, shadow } from '../gfx.js';
 import { h, btn, setPanel, hud, dialog } from '../ui.js';
 import { save, persist } from '../state.js';
 import { music, sfx, stopSpeech } from '../audio.js';
 import { ITEMS, CHAPTERS } from '../data/game.js';
-import { Session, makeQuestion, record, misspellings, shuffle } from '../learn.js';
+import { Session, makeQuestion, record, recordAnswer, missedWord, misspellings, shuffle } from '../learn.js';
 import { ask, correction } from '../quiz.js';
 import { tween, wait, burst, floatText, shake } from '../fx.js';
 import { grantRewards } from '../flow.js';
@@ -48,7 +48,9 @@ export class PuzzleScene {
       save.seen.puzzle = true; persist();
       await dialog([['ulla', 'En runedør! Hver rune lyser, når du løser en ordgåde. Tænd alle fire, så åbner døren.'], ['ulla', 'Her slår ingen monstre – så tag dig god tid.']]);
     }
-    const tasks = ['scramble', 'finderror', 'scramble', 'bridge'];
+    // fire runer: to faste opgaver og to tilfældige fra de nye gåder
+    const extra = shuffle(['scramble', 'wheel', 'vowel']);
+    const tasks = [extra[0], 'finderror', extra[1], 'bridge'];
     for (const tk of tasks) {
       let ok = false;
       while (!ok) ok = await this[tk]();
@@ -65,18 +67,21 @@ export class PuzzleScene {
   }
 
   async one(w, kind, label) {
-    const q = kind === 'scramble' ? { type: 'scramble', w } : makeQuestion(w, kind);
+    const q = makeQuestion(w, kind);
     const r = await ask(q, { header: this.header(), hint: this.hint(), label });
-    record(w, r.correct, r.correct && !r.hinted);
+    recordAnswer(w, r);
     this.total++;
     persist();
     if (r.correct) { this.correct++; this.xp += 4; floatText('+4', 128, 60, '#3cbcfc'); return true; }
-    this.session.miss(w);
-    await correction(w, { typed: r.typed });
+    const mw = missedWord(w, r);
+    this.session.miss(mw);
+    await correction(mw, { typed: r.typed });
     return false;
   }
 
   scramble() { return this.one(this.session.next(), 'scramble', '🧩 Sæt bogstaverne i rækkefølge'); }
+  wheel() { return this.one(this.session.next(), 'wheel', '🎡 Runehjulene: drej, så ordet staves rigtigt'); }
+  vowel() { return this.one(this.session.next(), 'vowel', '🔤 Runen mangler vokalerne – sæt dem ind'); }
 
   async bridge() {
     let stones = 0;
@@ -151,6 +156,7 @@ export class PuzzleScene {
     for (const tx of [52, 196]) {
       ctx.fillStyle = '#503000'; ctx.fillRect(tx, 70, 4, 14);
       const f = Math.round(Math.sin(t * 13 + tx) * 1.5);
+      glow(ctx, tx + 2, 64, 30 + f * 2, 'rgba(248,140,40,.32)');
       ctx.fillStyle = '#e45c10'; ctx.fillRect(tx - 2, 60 + f, 8, 10);
       ctx.fillStyle = '#f8b800'; ctx.fillRect(tx, 63 + f, 4, 6);
     }
@@ -183,6 +189,9 @@ export class PuzzleScene {
       ctx.globalAlpha = 1;
       if (Math.random() < 0.3) burst(128, cy, '#f8b800', 1, 30, 20);
     }
+    for (let i = 0; i < this.lit; i++) if (this.open < 0.5) glow(ctx, 100 + 4 + i * 13 + 5, 70, 12, 'rgba(60,188,252,.4)');
+    if (this.open > 0) glow(ctx, 128, 92, 50 * this.open, `rgba(252,240,180,${0.4 * this.open})`);
+    shadow(ctx, 54, 167, 15, 3);
     ctx.drawImage(heroCanvas(save.look), 30, 120 + Math.round(Math.sin(t * 2.5)), 48, 48);
     ctx.drawImage(sprite('owl'), 196, 110 + Math.round(Math.sin(t * 4) * 3), 32, 32);
     text(ctx, CHAPTERS[this.ch].name + ' · Runedøren', W / 2, 8, { size: 7, align: 'center', color: '#fce0a8' });

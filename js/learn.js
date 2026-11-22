@@ -105,8 +105,8 @@ export function shuffle(a) {
   return a;
 }
 
-const SWAP = { e: ['æ', 'i', 'a'], 'æ': ['e', 'a'], i: ['e', 'y'], y: ['ø', 'i', 'u'], 'ø': ['y', 'u', 'o'], u: ['o', 'ø'], o: ['å', 'u'], 'å': ['o', 'u', 'oa'], a: ['æ'] };
-const VOW = 'aeiouyæøå';
+export const SWAP = { e: ['æ', 'i', 'a'], 'æ': ['e', 'a'], i: ['e', 'y'], y: ['ø', 'i', 'u'], 'ø': ['y', 'u', 'o'], u: ['o', 'ø'], o: ['å', 'u'], 'å': ['o', 'u', 'oa'], a: ['æ'] };
+export const VOW = 'aeiouyæøå';
 
 // Typiske stavefejl for et ord. De mest "lærerige" først.
 export function misspellings(w) {
@@ -133,8 +133,12 @@ export function misspellings(w) {
   return out;
 }
 
-// Laver et spørgsmål. kind: hug | pick | type | fix
+// Laver et spørgsmål. kind: hug | pick | type | fix | scramble | wheel | vowel
+// (sieve bygges med makeSieve, fordi den bruger flere ord)
 export function makeQuestion(w, kind) {
+  if (kind === 'scramble') return { type: 'scramble', w };
+  if (kind === 'wheel') return makeWheel(w) || makeQuestion(w, 'pick');
+  if (kind === 'vowel') return [...w.word].some(c => VOW.includes(c)) ? { type: 'vowel', w } : makeQuestion(w, 'pick');
   if (kind === 'hug') kind = (w.opts && Math.random() < 0.65) ? 'choice' : 'pick';
   if (kind === 'choice' && !w.opts) kind = 'pick';
   if (kind === 'choice') return { type: 'choice', w, opts: shuffle(w.opts) };
@@ -154,3 +158,52 @@ export function sentenceWith(w, fill) {
   let s = w.sentence.replace('___', fill);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+// Bogstavhjul-lås: ordets svære del bliver et hjul, plus evt. et ekstra vokalhjul.
+// units: [{ s }] faste bogstaver og [{ opts, ans }] hjul.
+export function makeWheel(w) {
+  const units = [];
+  if (w.opts) {
+    for (const c of w.pre) units.push({ s: c });
+    units.push({ opts: w.opts.slice(), ans: w.ans });
+    for (const c of w.post) units.push({ s: c });
+  } else {
+    for (const c of w.word) units.push({ s: c });
+  }
+  const wheels = () => units.filter(u => u.opts).length;
+  const cands = units.map((u, i) => i).filter(i => units[i].s && SWAP[units[i].s] && !(units[i - 1] && units[i - 1].opts) && !(units[i + 1] && units[i + 1].opts));
+  for (const i of shuffle(cands)) {
+    if (wheels() >= 2) break;
+    const c = units[i].s;
+    units[i] = { opts: [c, ...SWAP[c].filter(x => x.length === 1)].slice(0, 3), ans: c };
+  }
+  if (!wheels()) return null;
+  // hjulene starter på et forkert bogstav
+  for (const u of units) if (u.opts) {
+    const wrong = u.opts.map((o, k) => k).filter(k => u.opts[k] !== u.ans);
+    u.cur = wrong.length ? wrong[Math.floor(Math.random() * wrong.length)] : 0;
+  }
+  return { type: 'wheel', w, units };
+}
+
+// Sandhedens lås / Ordstorm: find alle rigtigt stavede ord blandt nogle forkerte.
+export function makeSieve(words) {
+  const seen = new Set(), ws = [];
+  for (const w of words) if (!seen.has(w.word) && ws.length < 6) { seen.add(w.word); ws.push(w); }
+  const nBad = Math.max(1, Math.min(3, Math.floor(ws.length / 2)));
+  const bad = new Set(shuffle(ws.map((w, i) => i)).slice(0, nBad));
+  const items = ws.map((w, i) => {
+    if (!bad.has(i)) return { w, text: w.word, ok: true };
+    const m = misspellings(w)[0];
+    return m ? { w, text: m, ok: false } : { w, text: w.word, ok: true };
+  });
+  return { type: 'sieve', w: ws[0], items: shuffle(items) };
+}
+
+// Gem et svar. Spørgsmål med flere ord (sieve) giver r.results.
+export function recordAnswer(w, r, clean = true) {
+  if (r.results) for (const x of r.results) record(x.w, x.correct, x.correct && !r.hinted && clean);
+  else record(w, r.correct, r.correct && !r.hinted && clean);
+}
+// Det ord, der skal vises i "Se – Dæk – Skriv – Tjek" efter en fejl
+export const missedWord = (w, r) => (r.results && (r.results.find(x => !x.correct) || {}).w) || w;

@@ -78,13 +78,13 @@ python3 -m http.server 8000   # then open http://localhost:8000
 | File | What |
 |---|---|
 | `js/data/words.js` | Word lists per area (`s[ø]ster;Min ___ hedder Ida.;sister`) and the spelling tips |
-| `js/data/story.js` | All story dialogue |
-| `js/data/game.js` | Areas, monsters, items, magic, stats |
+| `js/data/story.js` | All story dialogue, plus the 12 chronicle scrolls (`LORE`) found in chests |
+| `js/data/game.js` | Areas, chests, monsters, items, sword techniques and magic (`ABILITIES`), stats |
 | `js/learn.js` | Spaced repetition (Leitner boxes), word picking, misspelling generator |
-| `js/quiz.js` | Question screens and the "Se – Dæk – Skriv – Tjek" correction |
+| `js/quiz.js` | Question screens (letter choice, pick, dictation, fix, scramble, letter wheels, vowel lock, "find all correct words") and the "Se – Dæk – Skriv – Tjek" correction |
 | `js/gfx.js` | Pixel-art sprites (text grids) and map/background generation |
 | `js/audio.js` | Chiptune music, sound effects, Danish text-to-speech |
-| `js/scenes/*` | Title, map, battle, puzzle, village, menus |
+| `js/scenes/*` | Title, map, battle, puzzle, village, menus, chest (locked treasure chests) |
 
 To add words, edit `js/data/words.js`. To push an update to phones that already have the game, bump `VERSION`
 in `sw.js`.

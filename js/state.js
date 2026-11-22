@@ -11,6 +11,7 @@ export function newSave(name, hair, tunic) {
     inv: { drik: 2, fjer: 3 },
     lvl: 1, xp: 0, gold: 20,
     ch: 0, done: {}, seen: {}, mapPos: {},
+    chests: {}, lore: [], bonusMp: 0,
     words: {},
     custom: [],
     stats: { answers: 0, correct: 0, days: {} },
@@ -27,11 +28,16 @@ export function load() {
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s || s.v !== 1) return null;
-    save = s;
-    save.settings = Object.assign({ music: true, sfx: true, voice: true, rate: 0.85, readStory: false }, save.settings);
-    save.custom ||= []; save.mapPos ||= {}; save.stats ||= { answers: 0, correct: 0, days: {} };
+    save = fill(s);
     return save;
   } catch (e) { return null; }
+}
+// Udfyld felter, som ældre gemte spil ikke har
+function fill(s) {
+  s.settings = Object.assign({ music: true, sfx: true, voice: true, rate: 0.85, readStory: false }, s.settings);
+  s.custom ||= []; s.mapPos ||= {}; s.stats ||= { answers: 0, correct: 0, days: {} };
+  s.chests ||= {}; s.lore ||= []; s.bonusMp ||= 0;
+  return s;
 }
 export function setSave(s) { save = s; persist(); }
 export function persist() {
@@ -43,7 +49,7 @@ export function exportCode() { return btoa(unescape(encodeURIComponent(JSON.stri
 export function importCode(code) {
   const s = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
   if (!s || s.v !== 1 || !s.name) throw new Error('Ugyldig kode');
-  save = s; persist(); return s;
+  save = fill(s); persist(); return s;
 }
 
 export function today() {
@@ -55,7 +61,8 @@ export function addGold(n) { save.gold += n; }
 export function giveItem(id, n = 1) {
   const it = ITEMS[id];
   if (!it) return;
-  if (it.slot === 'use') save.inv[id] = (save.inv[id] || 0) + n;
+  if (id === 'energikrystal') save.bonusMp = (save.bonusMp || 0) + n;
+  else if (it.slot === 'use') save.inv[id] = (save.inv[id] || 0) + n;
   else if (!save.owned.includes(id)) save.owned.push(id);
 }
 

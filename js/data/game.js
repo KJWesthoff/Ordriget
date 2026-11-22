@@ -10,6 +10,17 @@ const LAYOUTS = [
   [[7, 11], [4, 9], [7, 8], [11, 8], [11, 5], [7, 5], [4, 4], [7, 1]],
 ];
 
+// Skattekister: hver lås er en staveopgave (se quiz.js)
+const CHESTS = [
+  { after: 1, name: 'Egetræskisten', locks: ['wheel', 'vowel'] },
+  { after: 5, name: 'Jernkisten', locks: ['wheel', 'sieve', 'vowel'] },
+];
+export const LOCK_NAMES = {
+  wheel: '🔒 Bogstavhjul-låsen',
+  vowel: '🔒 Vokal-låsen',
+  sieve: '🔒 Sandhedens lås',
+};
+
 export const CHAPTERS = [
   {
     name: 'Engdalen', theme: 'meadow', focus: 'e, æ og i', shard: 'Æ-splinten',
@@ -50,6 +61,8 @@ export const CHAPTERS = [
 ];
 CHAPTERS.forEach((c, i) => {
   c.nodes = NODE_TYPES.map((type, j) => ({ type, x: LAYOUTS[i][j][0], y: LAYOUTS[i][j][1] }));
+  // Låste skattekister ved siden af stien. after = det sted, der skal klares først.
+  c.chests = CHESTS.map(k => ({ ...k }));
 });
 
 // Monstre: sprite + palet (m = hovedfarve, l = lys, q = mørk, x = ekstra)
@@ -141,17 +154,29 @@ export const ITEMS = {
   drik:         { slot: 'use', name: 'Lille livsdrik', price: 15, ch: 0, heal: 15, desc: 'Giver 15 liv' },
   stordrik:     { slot: 'use', name: 'Stor livsdrik',  price: 45, ch: 2, heal: 999, desc: 'Fylder livet helt op' },
   fjer:         { slot: 'use', name: 'Ugle-fjer',      price: 8,  ch: 0, desc: 'Et hint i kamp' },
-  magidrik:     { slot: 'use', name: 'Magidrik',       price: 30, ch: 1, mana: 99, desc: 'Fylder magien helt op' },
+  magidrik:     { slot: 'use', name: 'Energidrik',     price: 30, ch: 1, mana: 99, desc: 'Fylder livsenergien helt op' },
+  energikrystal: { slot: 'use', name: 'Livskrystal',   price: 0, drop: true, desc: '+1 maks livsenergi for altid' },
 };
 
+// kind: sword (sværdteknik) | magic (magi). mp = livsenergi det koster.
 export const ABILITIES = [
-  { id: 'hug',    name: 'Sværdhug',    lvl: 1,  mp: 0, q: 'hug',  mult: 1,   icon: '⚔️', desc: 'Vælg det rigtige bogstav. Giver +1 magi.' },
-  { id: 'heal',   name: 'Helbred',     lvl: 2,  mp: 3, q: 'type', heal: 0.5, icon: '💚', desc: 'Skriv ordet → få halvdelen af dit liv tilbage.' },
-  { id: 'fire',   name: 'Ildkugle',    lvl: 3,  mp: 2, q: 'type', mult: 2.2, icon: '🔥', desc: 'Skriv hele ordet → dobbelt skade.' },
-  { id: 'frost',  name: 'Frostskjold', lvl: 5,  mp: 2, q: 'pick', mult: 0.6, shield: 2, icon: '🛡️', desc: 'Find den rigtige stavning → blokér de næste 2 angreb.' },
-  { id: 'bolt',   name: 'Lynkæde',     lvl: 7,  mp: 4, q: 'fix',  mult: 3.5, icon: '⚡', desc: 'Ret Vrøvls stavefejl → kæmpe skade.' },
-  { id: 'stars',  name: 'Stjerneregn', lvl: 10, mp: 6, q: 'type', mult: 1.8, multi: 3, icon: '🌟', desc: 'Skriv 3 ord i træk → tre stjerneslag.' },
+  { id: 'hug',     kind: 'sword', name: 'Sværdhug',    lvl: 1,  mp: 0, q: 'hug',      mult: 1,   icon: '⚔️', desc: 'Vælg det rigtige bogstav. Giver +1 ekstra livsenergi.' },
+  { id: 'dobbelt', kind: 'sword', name: 'Dobbelthug',  lvl: 2,  mp: 1, q: 'hug',      mult: 0.9, multi: 2, icon: '🗡️', desc: 'To bogstaver i træk → to lynhurtige hug.' },
+  { id: 'heal',    kind: 'magic', name: 'Helbred',     lvl: 2,  mp: 3, q: 'type',     heal: 0.5, icon: '💚', desc: 'Skriv ordet → få halvdelen af dit liv tilbage.' },
+  { id: 'fire',    kind: 'magic', name: 'Ildkugle',    lvl: 3,  mp: 2, q: 'type',     mult: 2.2, icon: '🔥', desc: 'Skriv hele ordet → dobbelt skade.' },
+  { id: 'hvirvel', kind: 'sword', name: 'Hvirvelhug',  lvl: 4,  mp: 2, q: 'scramble', mult: 2.2, icon: '🌀', desc: 'Sæt bogstaverne i rækkefølge → en snurrende hvirvel.' },
+  { id: 'frost',   kind: 'magic', name: 'Frostskjold', lvl: 5,  mp: 2, q: 'pick',     mult: 0.6, shield: 2, icon: '🛡️', desc: 'Find den rigtige stavning → blokér de næste 2 angreb.' },
+  { id: 'modhug',  kind: 'sword', name: 'Modhug',      lvl: 6,  mp: 2, q: 'pick',     mult: 0.8, counter: true, icon: '↩️', desc: 'Find den rigtige stavning → næste angreb slås tilbage mod fjenden.' },
+  { id: 'bolt',    kind: 'magic', name: 'Lynkæde',     lvl: 7,  mp: 4, q: 'fix',      mult: 3.5, icon: '⚡', desc: 'Ret Vrøvls stavefejl → kæmpe skade.' },
+  { id: 'rune',    kind: 'sword', name: 'Runeklinge',  lvl: 8,  mp: 3, q: 'wheel',    mult: 3,   icon: '🔱', desc: 'Drej bogstavhjulene → klingen gløder af runekraft.' },
+  { id: 'stars',   kind: 'magic', name: 'Stjerneregn', lvl: 10, mp: 6, q: 'type',     mult: 1.8, multi: 3, icon: '🌟', desc: 'Skriv 3 ord i træk → tre stjerneslag.' },
+  { id: 'storm',   kind: 'sword', name: 'Ordstorm',    lvl: 11, mp: 5, q: 'sieve',    mult: 4.2, icon: '🌪️', desc: 'Find alle de rigtigt stavede ord → et stormhug.' },
 ];
+
+// Livsenergi: 4 + halvdelen af niveauet + én pr. splint + livskrystaller fra kister
+export function shardCount(save) {
+  return CHAPTERS.filter((c, i) => save.done && save.done[i + '-' + (c.nodes.length - 1)]).length;
+}
 
 export function xpToNext(lvl) { return 40 + 30 * lvl; }
 
@@ -161,7 +186,7 @@ export function heroStats(save) {
   const pet = save.look.pet ? ITEMS[save.look.pet] : null;
   return {
     maxHp: 20 + 4 * l,
-    maxMp: 4 + Math.floor(l / 2),
+    maxMp: 4 + Math.floor(l / 2) + shardCount(save) + (save.bonusMp || 0),
     atk: 2 + l + (w ? w.atk : 0),
     def: s ? s.def : 0,
     petDmg: pet ? pet.dmg : 0,

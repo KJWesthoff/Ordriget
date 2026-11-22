@@ -1,12 +1,12 @@
 // Offline-cache. Hæv VERSION når filerne ændres, så telefonen henter de nye.
-const VERSION = 'ordriget-v2';
+const VERSION = 'ordriget-v3';
 const SHELL = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest',
   'js/main.js', 'js/scene.js', 'js/flow.js', 'js/gfx.js', 'js/fx.js', 'js/ui.js', 'js/quiz.js',
   'js/audio.js', 'js/state.js', 'js/learn.js',
   'js/data/words.js', 'js/data/game.js', 'js/data/story.js',
   'js/scenes/title.js', 'js/scenes/map.js', 'js/scenes/battle.js', 'js/scenes/puzzle.js',
-  'js/scenes/village.js', 'js/scenes/menus.js',
+  'js/scenes/village.js', 'js/scenes/menus.js', 'js/scenes/chest.js',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 self.addEventListener('install', e => {

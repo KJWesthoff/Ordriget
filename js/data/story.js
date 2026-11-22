@@ -4,6 +4,7 @@
 export const PROLOGUE = [
   ['narr', 'For længe siden var Ordriget et fredeligt land. Alle ord stod pænt på deres plads, og alle kunne læse kongens breve.'],
   ['narr', 'I Biblioteksborgen lyste Ordkrystallen. Den holdt styr på alle bogstaver i hele riget.'],
+  ['narr', 'Fra krystallen strømmede livsenergi ud i landet. Hvert ord, der blev stavet rigtigt, fik lidt af den – og gav den videre til træer, dyr og mennesker.'],
   ['narr', 'Men en stormfuld nat kom en skikkelse i en lilla kappe. Han løftede sin stav og knuste krystallen i seks splinter...'],
   ['vrovl', 'HA HA HA! Fra i dag staver INGEN rigtigt! Alle ord skal være VRØVL!'],
   ['narr', 'Splinterne fløj ud over landet. Ordene begyndte at bytte bogstaver, og monstre vågnede i skovene og bjergene.'],
@@ -12,6 +13,8 @@ export const PROLOGUE = [
   ['hero', 'Mig? Jeg har været væk i mange år. Derovre staver de helt anderledes...'],
   ['ulla', 'Netop derfor! Du kender TO sprog. Du kan se forskel på vestlandske og danske ord. Vrøvls tricks virker ikke på dig – hvis du øver dig.'],
   ['ulla', 'Hver gang du staver et ord rigtigt, rammer dit sværd. Staver du forkert, slår monstret igen. Men bare rolig – jeg viser dig altid det rigtige ord bagefter.'],
+  ['ulla', 'Når du staver rigtigt, frigør du ordets livsenergi. Den kan du bruge til sværdteknikker og magi.'],
+  ['ulla', 'Og langs vejen står der gamle, låste skattekister. Ordridderne gemte dem for længe siden. Kun den, der kan stave, kan åbne dem.'],
   ['ulla', 'Kom! Den første splint er i Engdalen.'],
 ];
 
@@ -25,6 +28,7 @@ export const STORY = [
     village: [
       ['npc', 'Tak fordi du kom! Tornetrolden har lavet alle vores æbler om til "ebler"!'],
       ['npc', 'Et godt tip fra en gammel bonde: Mange æ-ord har en familie med a. Mand → mænd. Hånd → hænder. Lang → længe.'],
+      ['npc', 'Siden krystallen blev knust, vokser kornet kun halvt så højt. Der mangler livsenergi i jorden. Hver gang du staver rigtigt, kan jeg næsten se det gro lidt.'],
     ],
     preBoss: [
       ['tornetrold', 'GRRR! Hvem er du? Mester Vrøvl gav mig Æ-splinten. Den får du ALDRIG!'],
@@ -70,6 +74,7 @@ export const STORY = [
       ['npc', 'Søormen har slugt tre af vores både! Og nu kalder den sig "Søårmen". Det har Vrøvl lært den.'],
       ['npc', 'Ved du hvad? Jeg sejlede engang en mand ved navn Valdemar til Vestlandet. Han elskede ord. Men da han kom hjem, grinede folk af hans stavning...'],
       ['npc', 'Han gik op i bjergene og blev aldrig set igen.'],
+      ['npc', 'Sømændene siger, at der ligger en jernkiste ved klipperne. Låsen er lavet af bogstavhjul. Ingen af os kan stave godt nok til at åbne den.'],
     ],
     preBoss: [
       ['søorm', 'SSSS... ingen kommer forbi min båd... min "bod"... min... SSSS!'],
@@ -89,6 +94,7 @@ export const STORY = [
     village: [
       ['npc', 'Stenkæmpen Grum vogter en hule helt oppe på toppen. Derinde hænger et billede af en ung skriver med en fjerpen.'],
       ['npc', 'Et tip: Er det et spørgeord, der starter med v-lyd – hvad, hvor, hvem, hvis – så skriv hv!'],
+      ['npc', 'Her i minerne finder vi små livskrystaller. De er splinter af splinter – og de gør dig stærkere, når du bærer dem.'],
     ],
     preBoss: [
       ['grum', 'GRUM... ER... STUM. DU... SKAL... OGSÅ... VÆRE... STUM.'],
@@ -111,6 +117,7 @@ export const STORY = [
     village: [
       ['npc', 'Isdragen Frost har frosset alle de dobbelte bogstaver fast. Katten hedder nu "katen"!'],
       ['npc', 'Husk: hat – hatten. Kat – katten. Men kage og skole har kun én, fordi lyden er lang.'],
+      ['npc', 'Den sidste Ordridder hed Ingrid Isklinge. Hun lærte Ordstormen her på isen. Hun sagde: et sværd er kun så skarpt som det ord, man råber.'],
     ],
     preBoss: [
       ['frost', 'Tiden står stille her. Ingen nutid. Ingen fremtid. Kun is.'],
@@ -156,6 +163,36 @@ export const STORY = [
       ['narr', 'SLUT... eller er det? Du kan altid vende tilbage til alle områder og kæmpe igen.'],
     ],
   },
+];
+
+// Krøniken: gamle skriftruller i de låste skattekister (nøgle = område-kiste)
+export const LORE = {
+  '0-0': { title: 'Krystallens sang', text: 'Før riget havde en konge, havde det en krystal. De gamle siger, at den blev født af det allerførste ord, nogen skrev. Siden da har den sunget – og dens sang er livsenergi.' },
+  '0-1': { title: 'Den første Ordridder', text: 'Bonden Erik kunne hverken slås eller trylle. Men han kunne stave. Da en trold ville stjæle hans æbler, stavede han "æble" så rigtigt, at trolden blev til en busk. Sådan begyndte Ordriddernes orden.' },
+  '1-0': { title: 'Ylvas hemmelighed', text: 'Ylva var ikke altid en heks. Hun var Skovens gartner, og hendes y\'er fik birketræerne til at gro. Vrøvl lovede hende, at ingen ville rette hende mere, hvis hun hjalp ham.' },
+  '1-1': { title: 'Sværdhuggets regel', text: 'Ordriddernes første regel: Slå aldrig, før du har set ordet. Et sværd, der svinges i blinde, rammer kun luft. Et sværd, der svinges med det rigtige bogstav, rammer altid.' },
+  '2-0': { title: 'Skibet Bogstaven', text: 'Valdemar sejlede til Vestlandet på skibet Bogstaven. Han skrev i sin dagbog: "Derovre siger de ship, og jeg skriver skib. Jeg er bange for, at jeg glemmer, hvad der er hvad."' },
+  '2-1': { title: 'Søormens sorg', text: 'Søormen var engang havnens vogter. Den talte med bølgerne. Men da Vrøvl byttede å og o i dens navn, glemte den, hvem den var. Navne er stærke ord.' },
+  '3-0': { title: 'De stumme bogstaver', text: 'Hvorfor skriver vi bogstaver, som ingen siger? Fordi ordene husker, hvordan de lød for tusind år siden. Et stumt h er ordets gamle hjerte. Fjerner du det, mister ordet sin hukommelse.' },
+  '3-1': { title: 'Valdemars dagbog', text: '"Dag 400 i hulen. Jeg har skrevet søster tusind gange. Min hånd gør ondt. Jeg tænker på dem, der grinede. Måske ... måske skulle INGEN kunne stave. Så ville ingen grine."' },
+  '4-0': { title: 'Tidens is', text: 'I Isslottet står tiden stille. Derfor ved ordene ikke, om de sker nu. Det lille r for enden er tidens hjerteslag: han lærer, hun spiser, de løber. Uden r fryser ordet fast.' },
+  '4-1': { title: 'Ingrid Isklinge', text: 'Den sidste Ordridder kunne finde de rigtige ord blandt tusind forkerte. Hun kaldte det Ordstormen. "Man skal ikke kunne alt," sagde hun. "Man skal kunne se, hvad der er sandt."' },
+  '5-0': { title: 'Vrøvls stav', text: 'Staven var engang en almindelig fjerpen. Valdemar fyldte den med alle de ord, han skammede sig over. Den blev tung og mørk. Kun et venligt ord kan gøre den let igen.' },
+  '5-1': { title: 'To sprog, ét hjerte', text: 'På den sidste side i Valdemars dagbog står der med lille skrift: "Hvis nogen nogensinde kommer hjem fra Vestlandet som mig, så sig til dem: To sprog er ikke for meget. Det er en dobbelt skat."' },
+};
+
+export const SKILLS_INTRO = [
+  ['ulla', 'Hu-hu! Du har lært din første sværdteknik. Ordridderne i gamle dage kæmpede ikke kun med magi – de kæmpede med klingen.'],
+  ['ulla', 'Hver teknik bruger lidt livsenergi. Den får du tilbage, hver gang du staver et ord rigtigt. Et rigtigt ord er fuld af liv!'],
+  ['ulla', 'Og er din livsenergi helt fuld, strømmer den over og heler dine sår.'],
+];
+export const LORE_SAVED = [['ulla', 'Den skriftrulle gemmer jeg i Krøniken. Du kan læse den igen i menuen.']];
+export const loreLine = l => '«' + l.title + '» – ' + l.text;
+
+export const CHEST_INTRO = [
+  ['ulla', 'En gammel skattekiste fra Ordriddernes tid! Se, den er låst.'],
+  ['ulla', 'Hver lås er en stavegåde. Bogstavhjul skal drejes, vokaler skal sættes ind, og Sandhedens lås vil have, at du finder alle de rigtige ord.'],
+  ['ulla', 'Ingen monstre her. Tag den tid, du har brug for.'],
 ];
 
 export const TRAINING_INTRO = [

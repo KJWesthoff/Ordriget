@@ -12,7 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WORDLISTS, parseEntry } from '../js/data/words.js';
-import { PROLOGUE, STORY, TRAINING_INTRO } from '../js/data/story.js';
+import { PROLOGUE, STORY, TRAINING_INTRO, SKILLS_INTRO, CHEST_INTRO, LORE_SAVED, LORE, loreLine } from '../js/data/story.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'audio');
@@ -36,7 +36,9 @@ WORDLISTS.forEach((list, ch) => list.forEach(s => {
   texts.add(clipKey(w.word));
   if (w.sentence) texts.add(clipKey(cap(w.sentence.replace('___', w.word))));
 }));
-const story = [PROLOGUE, TRAINING_INTRO, ...STORY.flatMap(c => Object.values(c))];
+const story = [PROLOGUE, TRAINING_INTRO, SKILLS_INTRO, CHEST_INTRO, LORE_SAVED, ...STORY.flatMap(c => Object.values(c))];
+// Krønikens skriftruller: som de læses i kisten og i menuen
+for (const l of Object.values(LORE)) story.push([['brev', loreLine(l)], ['brev', l.text]]);
 for (const lines of story) for (const [, t] of lines) if (!t.includes('{navn}')) texts.add(clipKey(t));
 
 // ---- Generér ----

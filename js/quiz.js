@@ -2,7 +2,7 @@
 // og "Se – Dæk – Skriv – Tjek" efter en fejl.
 import { h, btn, setPanel, keyboard, detachKeyboard } from './ui.js';
 import { speak, canSay, sfx, stopSpeech } from './audio.js';
-import { sentenceWith, shuffle } from './learn.js';
+import { sentenceWith, shuffle, VOW } from './learn.js';
 import { tipFor } from './data/words.js';
 import { save } from './state.js';
 
@@ -39,6 +39,9 @@ export function ask(q, { header = null, hint = null, label = '' } = {}) {
   if (q.type === 'choice') return askChoice(q, header, hint, label);
   if (q.type === 'pick') return askPick(q, header, hint, label);
   if (q.type === 'scramble') return askScramble(q, header, hint, label);
+  if (q.type === 'wheel') return askWheel(q, header, hint, label);
+  if (q.type === 'vowel') return askVowel(q, header, hint, label);
+  if (q.type === 'sieve') return askSieve(q, header, hint, label);
   return askType(q, header, hint, label);
 }
 
@@ -199,6 +202,140 @@ function askScramble(q, header, hint, label) {
     setPanel(header, area);
     render();
     sayWord(w);
+  });
+}
+
+// Bogstavhjul: drej hjulene, til ordet er stavet rigtigt, og tryk "Prøv låsen"
+function askWheel(q, header, hint, label) {
+  return new Promise(resolve => {
+    const w = q.w; let done = false, hinted = false;
+    const units = q.units.map(u => ({ ...u }));
+    const area = h('div');
+    const shown = o => (o === '' ? '·' : o);
+    const spin = (u, d) => { if (done || u.locked) return; sfx('type'); u.cur = (u.cur + d + u.opts.length) % u.opts.length; render(); };
+    const onHint = hint ? () => {
+      if (done) return;
+      const u = units.find(x => x.opts && !x.locked && x.opts[x.cur] !== x.ans) || units.find(x => x.opts && !x.locked);
+      if (!u || !hint.use()) return;
+      hinted = true; u.cur = u.opts.indexOf(u.ans); u.locked = true; render();
+    } : null;
+    function render(state) {
+      const row = h('div', { class: 'wheels' }, units.map(u => u.opts
+        ? h('div', { class: 'wheel' + (u.locked ? ' locked' : '') + (state ? (u.opts[u.cur] === u.ans ? ' good' : ' bad') : '') },
+          h('button', { class: 'wh-btn', onclick: () => spin(u, -1), 'aria-label': 'Op' }, '▲'),
+          h('div', { class: 'wh-win' },
+            h('span', { class: 'wh-ghost' }, shown(u.opts[(u.cur - 1 + u.opts.length) % u.opts.length])),
+            h('span', { class: 'wh-cur' }, shown(u.opts[u.cur])),
+            h('span', { class: 'wh-ghost' }, shown(u.opts[(u.cur + 1) % u.opts.length]))),
+          h('button', { class: 'wh-btn', onclick: () => spin(u, 1), 'aria-label': 'Ned' }, '▼'))
+        : h('div', { class: 'wh-fix' }, u.s)));
+      area.replaceChildren(
+        topRow(w, { hints: hint ? hint.count() : 0, onHint, label: label || '🔒 Drej hjulene, så ordet staves rigtigt' }),
+        sentenceEl(w, w.word.length), row,
+        btn('🔑 Prøv låsen', check, 'primary', { disabled: done ? true : null }),
+      );
+    }
+    function check() {
+      if (done) return; done = true;
+      const ok = units.map(u => (u.opts ? u.opts[u.cur] : u.s)).join('') === w.word;
+      sfx(ok ? 'correct' : 'wrong');
+      render(true);
+      setTimeout(() => resolve({ correct: ok, hinted, typed: units.map(u => (u.opts ? u.opts[u.cur] : u.s)).join('') }), ok ? 600 : 1100);
+    }
+    setPanel(header, area);
+    render();
+    sayWord(w);
+  });
+}
+
+// Vokal-lås: konsonanterne står der – sæt de rigtige vokaler ind
+const VOWEL_KEYS = 'aeiouyæøå';
+function askVowel(q, header, hint, label) {
+  return new Promise(resolve => {
+    const w = q.w; let done = false, hinted = false;
+    const chars = [...w.word];
+    const gaps = chars.map((c, i) => (VOW.includes(c) ? i : -1)).filter(i => i >= 0);
+    const fill = {}; const locked = new Set();
+    const area = h('div');
+    const nextGap = () => gaps.find(i => fill[i] == null);
+    const put = v => { if (done) return; const i = nextGap(); if (i == null) return; sfx('type'); fill[i] = v; render(); if (nextGap() == null) check(); };
+    const back = () => { if (done) return; const filled = gaps.filter(i => fill[i] != null && !locked.has(i)); if (!filled.length) return; delete fill[filled[filled.length - 1]]; render(); };
+    const onHint = hint ? () => {
+      if (done) return;
+      const i = gaps.find(k => !locked.has(k) && fill[k] !== chars[k]);
+      if (i == null || !hint.use()) return;
+      hinted = true;
+      for (const k of gaps) if (!locked.has(k) && k > i) delete fill[k];
+      fill[i] = chars[i]; locked.add(i); render();
+    } : null;
+    function render(state) {
+      const cur = nextGap();
+      const slots = h('div', { class: 'slots' }, chars.map((c, i) => {
+        if (!gaps.includes(i)) return h('span', { class: 'ls fixed' }, c);
+        let cls = 'ls vgap';
+        if (state) cls += fill[i] === c ? ' good' : ' bad';
+        else if (i === cur) cls += ' cur';
+        return h('span', { class: cls, onclick: () => { if (done || locked.has(i) || fill[i] == null) return; delete fill[i]; render(); } }, fill[i] || '');
+      }));
+      area.replaceChildren(
+        topRow(w, { hints: hint ? hint.count() : 0, onHint, label: label || '🔒 Sæt de rigtige vokaler ind' }),
+        sentenceEl(w, w.word.length), slots,
+        h('div', { class: 'tiles vowels' }, [...VOWEL_KEYS].map(v => h('button', { class: 'tile' + ('æøå'.includes(v) ? ' dk' : ''), onclick: () => put(v) }, v)),
+          h('button', { class: 'tile back', onclick: back }, '⌫')),
+      );
+    }
+    function check() {
+      done = true;
+      const typed = chars.map((c, i) => (gaps.includes(i) ? fill[i] : c)).join('');
+      const ok = typed === w.word;
+      sfx(ok ? 'correct' : 'wrong');
+      render(true);
+      setTimeout(() => resolve({ correct: ok, hinted, typed }), ok ? 600 : 1100);
+    }
+    setPanel(header, area);
+    render();
+    sayWord(w);
+  });
+}
+
+// Sandhedens lås: tryk på ALLE de rigtigt stavede ord
+function askSieve(q, header, hint, label) {
+  return new Promise(resolve => {
+    let done = false, hinted = false;
+    const items = q.items.map(x => ({ ...x, on: false, gone: false }));
+    const need = items.filter(x => x.ok).length;
+    const area = h('div');
+    const onHint = hint ? () => {
+      if (done) return;
+      const bad = items.filter(x => !x.ok && !x.gone);
+      if (!bad.length || !hint.use()) return;
+      hinted = true; const b = bad[Math.floor(Math.random() * bad.length)]; b.gone = true; b.on = false; render();
+    } : null;
+    function render(state) {
+      area.replaceChildren(
+        h('div', { class: 'q-top' }, h('div', { class: 'q-label' }, label || `🔒 Tryk på alle ${need} rigtigt stavede ord`),
+          onHint ? h('button', { class: 'icon-btn hint', onclick: onHint, disabled: hint.count() <= 0 ? true : null }, '🪶', h('small', {}, String(hint.count()))) : null),
+        h('div', { class: 'note' }, items.map(x => h('button', {
+          class: 'chip' + (x.on ? ' on' : '') + (x.gone ? ' gone' : '') + (state ? (x.ok === x.on ? ' good' : ' bad') : ''),
+          disabled: x.gone || done ? true : null,
+          onclick: () => { if (done) return; sfx('type'); x.on = !x.on; render(); },
+        }, x.text))),
+        h('div', { class: 'q-msg' }, `Valgt: ${items.filter(x => x.on).length}`),
+        btn('✔ Tjek', check, 'primary', { disabled: done ? true : null }),
+      );
+    }
+    function check() {
+      if (done) return;
+      if (!items.some(x => x.on)) { sfx('wrong'); return; }
+      done = true;
+      const results = items.map(x => ({ w: x.w, correct: x.on === x.ok }));
+      const ok = results.every(x => x.correct);
+      sfx(ok ? 'correct' : 'wrong');
+      render(true);
+      setTimeout(() => resolve({ correct: ok, hinted, results }), ok ? 650 : 1500);
+    }
+    setPanel(header, area);
+    render();
   });
 }
 

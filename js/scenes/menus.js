@@ -6,6 +6,7 @@ import { WORDS, mastery, customWords } from '../learn.js';
 import { heroCanvas, petCanvas, sprite } from '../gfx.js';
 import { sayWord } from '../quiz.js';
 import { startTraining, toTitle } from '../flow.js';
+import { LORE } from '../data/story.js';
 
 const SLOTS = [
   ['weapon', '⚔️ Våben'], ['shield', '🛡️ Skjolde'], ['tunic', '👕 Dragter'], ['hat', '🎩 Hatte'],
@@ -72,7 +73,7 @@ export function equipScreen(onBack, onPreview, slot = 'weapon') {
     const st = heroStats(save);
     const list = save.owned.filter(id => ITEMS[id] && ITEMS[id].slot === slot);
     setPanel(
-      h('div', { class: 'row between' }, h('div', { class: 'area-name' }, '👕 Udstyr'), h('div', { class: 'small' }, `⚔️ ${st.atk}  🛡️ ${st.def}  ❤️ ${st.maxHp}  ✨ ${st.maxMp}`)),
+      h('div', { class: 'row between' }, h('div', { class: 'area-name' }, '👕 Udstyr'), h('div', { class: 'small' }, `⚔️ ${st.atk}  🛡️ ${st.def}  ❤️ ${st.maxHp}  💠 ${st.maxMp}`)),
       preview(save.look),
       tabs(slot, k => { slot = k; render(); }, SLOTS.filter(s => s[0] !== 'use')),
       h('div', { class: 'items' },
@@ -94,23 +95,59 @@ export function menuScreen(onBack) {
     h('div', { class: 'menu-grid' },
       btn('👕 Udstyr', () => equipScreen(() => menuScreen(onBack)), 'act'),
       btn('📖 Ordbog', () => wordBook(() => menuScreen(onBack)), 'act'),
-      btn('✨ Magi', () => abilityList(() => menuScreen(onBack)), 'act'),
+      btn('🗡️ Evner', () => abilityList(() => menuScreen(onBack)), 'act'),
+      btn('📜 Krønike', () => chronicle(() => menuScreen(onBack)), 'act'),
       btn('🗼 Træning', () => startTraining(), 'act'),
       btn('⚙️ Indstillinger', () => settings(() => menuScreen(onBack)), 'act'),
       btn('👪 Forældre', () => parents(() => menuScreen(onBack)), 'act'),
     ),
-    h('div', { class: 'small dim center' }, `⚔️ ${st.atk} angreb · 🛡️ ${st.def} forsvar · 🧪 ${save.inv.drik || 0} drikke · 🪶 ${save.inv.fjer || 0} fjer`),
+    h('div', { class: 'small dim center' }, `⚔️ ${st.atk} angreb · 🛡️ ${st.def} forsvar · 💠 ${st.maxMp} livsenergi · 🧪 ${save.inv.drik || 0} drikke · 🪶 ${save.inv.fjer || 0} fjer`),
     btn('◀ Tilbage til kortet', onBack, 'small'),
   );
 }
 
 function abilityList(onBack) {
+  const row = a => h('div', { class: 'ab' + (a.kind === 'sword' ? ' sword' : '') + (a.lvl <= save.lvl ? '' : ' off') },
+    h('span', { class: 'ab-ico' }, a.lvl <= save.lvl ? a.icon : '🔒'),
+    h('span', { class: 'ab-txt' }, h('b', {}, a.name + (a.lvl > save.lvl ? ` (Nv. ${a.lvl})` : '')), h('small', {}, a.desc)),
+    h('span', { class: 'ab-mp' }, a.mp ? a.mp + '💠' : ''));
+  const st = heroStats(save);
   setPanel(
-    h('div', { class: 'area-name' }, '✨ Magi'),
-    h('div', { class: 'ab-list' }, ABILITIES.map(a => h('div', { class: 'ab' + (a.lvl <= save.lvl ? '' : ' off') },
-      h('span', { class: 'ab-ico' }, a.lvl <= save.lvl ? a.icon : '🔒'),
-      h('span', { class: 'ab-txt' }, h('b', {}, a.name + (a.lvl > save.lvl ? ` (Nv. ${a.lvl})` : '')), h('small', {}, a.desc)),
-      h('span', { class: 'ab-mp' }, a.mp ? a.mp + '✨' : '')))),
+    h('div', { class: 'area-name' }, '🗡️ Evner'),
+    h('p', { class: 'small dim' }, `💠 Livsenergi: ${st.maxMp}. Du får energi for hvert rigtigt ord. Er den fuld, heler den dig i stedet. Splinter og livskrystaller giver mere.`),
+    h('div', { class: 'sec' }, '🗡️ Sværdteknikker'),
+    h('div', { class: 'ab-list' }, ABILITIES.filter(a => a.kind === 'sword').map(row)),
+    h('div', { class: 'sec' }, '✨ Magi'),
+    h('div', { class: 'ab-list' }, ABILITIES.filter(a => a.kind === 'magic').map(row)),
+    btn('◀ Tilbage', onBack, 'small'),
+  );
+}
+
+// Krøniken: skriftruller fundet i skattekisterne
+function chronicle(onBack, open = null) {
+  const ids = Object.keys(LORE);
+  const found = ids.filter(id => save.lore.includes(id));
+  if (open) {
+    const l = LORE[open];
+    setPanel(
+      h('div', { class: 'area-name' }, '📜 ' + l.title),
+      h('div', { class: 'scroll' }, l.text),
+      h('div', { class: 'row' },
+        h('button', { class: 'icon-btn', onclick: () => speak(l.text) }, '🔊'),
+        btn('◀ Tilbage', () => chronicle(onBack), 'small grow')),
+    );
+    return;
+  }
+  setPanel(
+    h('div', { class: 'row between' }, h('div', { class: 'area-name' }, '📜 Krønike'), h('div', { class: 'small' }, `${found.length}/${ids.length} skriftruller`)),
+    h('p', { class: 'small dim' }, 'Gamle skriftruller fra Ordriddernes tid. Find flere i de låste skattekister på kortet.'),
+    h('div', { class: 'items' }, ids.map(id => {
+      const [c, k] = id.split('-').map(Number);
+      const has = save.lore.includes(id);
+      return h('div', { class: 'item' + (has ? '' : ' owned'), onclick: () => { if (!has) return; sfx('select'); chronicle(onBack, id); } },
+        h('div', { class: 'grow' }, h('b', {}, has ? LORE[id].title : '???'), h('small', {}, CHAPTERS[c].name + ' · ' + CHAPTERS[c].chests[k].name)),
+        has ? h('span', { class: 'tag' }, 'Læs') : h('span', { class: 'tag dim' }, '🔒'));
+    })),
     btn('◀ Tilbage', onBack, 'small'),
   );
 }

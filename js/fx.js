@@ -54,6 +54,9 @@ export function draw(ctx) {
     ctx.globalAlpha = Math.max(0, 1 - p.t / p.life);
     ctx.fillStyle = p.color;
     ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+    // lille glorie om hver gnist
+    ctx.globalAlpha *= 0.25;
+    ctx.fillRect(Math.round(p.x) - 1, Math.round(p.y) - 1, p.size + 2, p.size + 2);
   }
   ctx.globalAlpha = 1;
   for (const f of floats) {

@@ -12,6 +12,7 @@ import { MapScene } from './scenes/map.js';
 import { BattleScene } from './scenes/battle.js';
 import { PuzzleScene } from './scenes/puzzle.js';
 import { VillageScene } from './scenes/village.js';
+import { ChestScene } from './scenes/chest.js';
 import { menuScreen } from './scenes/menus.js';
 
 export function toTitle() { setScene(new TitleScene()); }
@@ -35,8 +36,8 @@ export async function grantRewards({ xp = 0, gold = 0, items = [] }) {
     sfx('levelup');
     await modal(
       h('div', { class: 'modal-title' }, '⭐ NIVEAU ' + u.lvl + '! ⭐'),
-      h('p', {}, 'Du er blevet stærkere: mere liv, mere magi og hårdere slag.'),
-      u.abilities.map(a => h('div', { class: 'newab' }, h('div', { class: 'big-ico' }, a.icon), h('div', {}, h('b', {}, 'Ny magi: ' + a.name), h('br'), a.desc))),
+      h('p', {}, 'Du er blevet stærkere: mere liv, mere livsenergi og hårdere slag.'),
+      u.abilities.map(a => h('div', { class: 'newab' }, h('div', { class: 'big-ico' }, a.icon), h('div', {}, h('b', {}, (a.kind === 'sword' ? 'Ny sværdteknik: ' : 'Ny magi: ') + a.name), h('br'), a.desc))),
     );
   }
 }
@@ -61,6 +62,10 @@ export function startNode(ch, i) {
   }
 }
 
+export function startChest(ch, k) {
+  setScene(new ChestScene({ ch, k, main: WORDS[ch], review: reviewPool(ch), onEnd: () => toMap(ch) }));
+}
+
 async function nodeEnd(ch, i, win) {
   const c = CHAPTERS[ch], node = c.nodes[i];
   if (!win) { toMap(ch); return; }
@@ -78,6 +83,7 @@ async function nodeEnd(ch, i, win) {
     await modal(
       h('div', { class: 'modal-title' }, '💎 ' + c.shard + '!'),
       h('p', {}, `Du har nu ${ch + 1} af 6 splinter af Ordkrystallen.`),
+      h('p', {}, '💠 Splinten giver dig +1 maks livsenergi.'),
       h('div', { class: 'loot' }, items.map(id => h('div', {}, '🎁 ' + ITEMS[id].name))),
       ch < CHAPTERS.length - 1 ? h('p', {}, h('b', {}, 'Nyt område: ' + CHAPTERS[ch + 1].name + '!')) : h('p', {}, h('b', {}, 'Du er Rigets Ordridder! 👑')),
     );

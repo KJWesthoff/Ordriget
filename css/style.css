@@ -263,3 +263,50 @@ textarea { width: 100%; font-family: var(--vt); font-size: 20px; background: #00
 @media (min-width: 561px) {
   #app { border-left: 2px solid #222; border-right: 2px solid #222; }
 }
+
+/* ---------- Nye handlinger & evner ---------- */
+.actions.four .act:last-child { grid-column: 1 / -1; min-height: 46px; }
+.btn.sword { background-color: #9a4818; }
+.ab.sword { border-color: #c88040; background: linear-gradient(90deg, #2c1a10, var(--panel2)); }
+.sec { font-family: var(--pix); font-size: 9px; color: var(--gold); margin-top: 4px; }
+.menu-grid .act:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.node-card.chest { border-color: #c8a040; background: linear-gradient(90deg, #3a2808, var(--panel2)); }
+.scroll { background: linear-gradient(#fff2cc, #f0d8a0); color: #2a1800; padding: 14px 16px; font-size: 23px; line-height: 1.25; border: 3px solid #ac7c00; box-shadow: 0 0 0 3px #000, inset 0 0 18px rgba(120,70,0,.35); }
+.tag.dim { background: #303050; }
+
+/* ---------- Bogstavhjul ---------- */
+.wheels { display: flex; justify-content: center; align-items: center; gap: 4px; padding: 8px 0; flex-wrap: wrap; }
+.wh-fix { font-family: var(--pix); font-size: 20px; padding: 0 2px; color: #fff; }
+.wheel { display: flex; flex-direction: column; align-items: center; background: linear-gradient(#5a3c10, #2a1800); border: 2px solid #f8b800; box-shadow: 0 0 0 2px #000; }
+.wheel.locked { border-color: var(--lblue); }
+.wheel.good { border-color: var(--lgreen); }
+.wheel.bad { border-color: #f87858; animation: shake .3s; }
+.wh-btn { width: 46px; height: 30px; background: none; border: none; color: #f8d878; font-size: 16px; cursor: pointer; }
+.wh-btn:active { color: #fff; }
+.wh-win { display: flex; flex-direction: column; align-items: center; width: 46px; background: linear-gradient(#000, #2a2a2a 30%, #3a3a3a 50%, #2a2a2a 70%, #000); padding: 2px 0; }
+.wh-cur { font-family: var(--pix); font-size: 20px; color: #fff; height: 28px; line-height: 28px; }
+.wh-ghost { font-family: var(--pix); font-size: 11px; color: #777; height: 14px; line-height: 14px; }
+
+/* ---------- Vokal-lås & sandhedens lås ---------- */
+.ls.fixed { color: #ddd; border-color: #303050; background: #0a0a20; }
+.ls.vgap { cursor: pointer; border-color: #7cf0fc; }
+.tiles.vowels .tile { background: #3060b0; box-shadow: inset -3px -3px 0 #102860, inset 3px 3px 0 #70a8f8, 0 0 0 2px #000; }
+.tiles.vowels .tile.dk { background: #b03080; box-shadow: inset -3px -3px 0 #601040, inset 3px 3px 0 #f070c0, 0 0 0 2px #000; }
+.tiles.vowels .tile.back { background: #404060; width: 60px; }
+.chip.on { background: #7cf0fc; border-color: #0058f8; box-shadow: 0 0 0 2px #0058f8; }
+.chip.bad { background: #f87858; }
+.chip.gone { opacity: .25; text-decoration: line-through; }
+.chip:disabled { cursor: default; }
+@keyframes shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+
+/* ---------- 16-bit look: glattere vinduer og knapper ---------- */
+#panel { background: linear-gradient(180deg, #14144a 0%, #0a0a2c 60%, #08081e 100%); }
+#panel .btn, .modal .btn { background-image: linear-gradient(rgba(255,255,255,.2), rgba(255,255,255,0) 45%, rgba(0,0,0,.2)); border-radius: 3px; }
+.btn.primary { background-color: #1860e0; }
+.btn.magic { background-color: #7010b8; }
+.dialog { background: linear-gradient(180deg, #2030a0 0%, #101860 55%, #080c38 100%); border-radius: 4px; box-shadow: 0 0 0 3px #000, inset 0 0 0 2px #6878d8; }
+.dialog.narr { background: linear-gradient(180deg, #1c1038 0%, #0c0820 100%); }
+.dlg-port canvas { border-radius: 2px; background: linear-gradient(#3848b8, #18206a); }
+.node-card, .item, .ab { border-radius: 3px; }
+.modal { background: linear-gradient(180deg, #1c2880 0%, #0c1040 100%); border-radius: 5px; }
+.sumgrid, .newab, .preview { border-radius: 3px; }

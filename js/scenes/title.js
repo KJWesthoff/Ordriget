@@ -1,4 +1,4 @@
-import { W, H, text, sprite, heroCanvas, buildBattleBg, HAIR_COLORS } from '../gfx.js';
+import { W, H, text, sprite, heroCanvas, buildBattleBg, HAIR_COLORS, ambient, shadow, glow } from '../gfx.js';
 import { h, btn, setPanel, keyboard, hud, dialog, toast } from '../ui.js';
 import { save, newSave, setSave, persist } from '../state.js';
 import { music, setAudioPrefs, setRate } from '../audio.js';
@@ -28,18 +28,22 @@ export class TitleScene {
   }
   draw(ctx, t) {
     ctx.drawImage(this.bg, 0, 0, W, H);
-    // slot i baggrunden
-    ctx.fillStyle = '#7c7c7c';
-    ctx.fillRect(176, 84, 56, 48); ctx.fillRect(170, 64, 16, 68); ctx.fillRect(222, 64, 16, 68);
-    ctx.fillStyle = '#404040';
+    ambient(ctx, 'meadow', t);
+    // slot i baggrunden, med sol- og skyggeside
+    const wall = (x, y, w, hh) => { ctx.fillStyle = '#a8a8b8'; ctx.fillRect(x, y, w, hh); ctx.fillStyle = '#c8c8d8'; ctx.fillRect(x, y, Math.ceil(w / 3), hh); ctx.fillStyle = '#787890'; ctx.fillRect(x + w - 3, y, 3, hh); };
+    wall(176, 84, 56, 48); wall(170, 64, 16, 68); wall(222, 64, 16, 68);
+    ctx.fillStyle = '#585870';
     for (let x = 170; x < 238; x += 6) ctx.fillRect(x, 60, 4, 4);
-    ctx.fillRect(198, 108, 12, 24);
+    for (let y = 90; y < 130; y += 6) for (let x = 178 + (y % 12 ? 0 : 4); x < 230; x += 8) { ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.fillRect(x, y, 6, 1); }
+    ctx.fillStyle = '#302838'; ctx.fillRect(198, 108, 12, 24); ctx.beginPath(); ctx.arc(204, 108, 6, Math.PI, 0); ctx.fill();
+    glow(ctx, 178, 74, 8 + Math.sin(t * 3), 'rgba(248,216,120,.5)'); ctx.fillStyle = '#f8d878'; ctx.fillRect(176, 72, 3, 4); ctx.fillRect(228, 72, 3, 4);
     ctx.fillStyle = '#d82800'; ctx.fillRect(203, 44, 2, 20); ctx.fillRect(205, 44, 8, 6);
     const bob = Math.round(Math.sin(t * 2) * 2);
     text(ctx, 'ORDRIGET', W / 2 + 2, 24 + bob + 2, { size: 24, color: '#000', shadow: null, align: 'center' });
     text(ctx, 'ORDRIGET', W / 2, 24 + bob, { size: 24, color: '#f8b800', shadow: '#d82800', align: 'center' });
     text(ctx, 'Stavningens Eventyr', W / 2, 56, { size: 8, color: '#fcfcfc', align: 'center' });
     const look = save ? save.look : { hair: 'brun', tunic: 'dragt_blå', weapon: 'træsværd' };
+    shadow(ctx, 64, 151, 14, 3); shadow(ctx, 112, 151, 9, 2);
     ctx.drawImage(heroCanvas(look), 40, 104 + Math.round(Math.abs(Math.sin(t * 3)) * -3), 48, 48);
     ctx.drawImage(sprite('owl'), 96, 92 + Math.round(Math.sin(t * 4) * 4), 32, 32);
   }

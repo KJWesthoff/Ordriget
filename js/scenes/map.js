@@ -1,4 +1,4 @@
-import { W, H, text, sprite, heroCanvas, petCanvas, buildMap, box } from '../gfx.js';
+import { W, H, text, sprite, heroCanvas, petCanvas, buildMap, box, shadow, glow } from '../gfx.js';
 import { h, btn, setPanel, hud, dialog, toast } from '../ui.js';
 import { save, persist, isDone, isUnlocked } from '../state.js';
 import { music, sfx } from '../audio.js';
@@ -6,7 +6,7 @@ import { CHAPTERS, MONSTERS } from '../data/game.js';
 import { STORY } from '../data/story.js';
 import { mastery } from '../learn.js';
 import { tween } from '../fx.js';
-import { startNode, toMap, startTraining } from '../flow.js';
+import { startNode, toMap, startTraining, startChest } from '../flow.js';
 
 const ICON = { battle: 'icoBattle', puzzle: 'icoPuzzle', village: 'icoVillage', boss: 'icoBoss' };
 const COLOR = { battle: '#d82800', puzzle: '#f8b800', village: '#00a800', boss: '#940084' };
@@ -61,13 +61,29 @@ export class MapScene {
     }
     if (this.sel !== this.cur) this.walkTo(this.sel);
   }
+  chestState(k) {
+    const cd = this.c.chests[k];
+    if (save.chests[this.ch + '-' + k]) return 'open';
+    return isDone(this.ch, cd.after) ? 'ready' : 'locked';
+  }
   click(x, y) {
     if (this.walking || this.inMenu) return;
+    const k = this.m.chests.findIndex(p => Math.abs(p.x * 16 + 8 - x) < 10 && Math.abs(p.y * 16 + 8 - y) < 10);
+    if (k >= 0) {
+      const st = this.chestState(k);
+      if (st === 'locked') { sfx('wrong'); toast('Kisten er låst fast med torne – klar ' + nodeName(this.c, this.c.nodes[this.c.chests[k].after], this.c.chests[k].after) + ' først'); return; }
+      sfx('select');
+      this.selChest = k;
+      this.panel();
+      return;
+    }
     const i = this.c.nodes.findIndex(n => Math.abs(n.x * 16 + 8 - x) < 11 && Math.abs(n.y * 16 + 8 - y) < 11);
     if (i < 0) return;
     if (!isUnlocked(this.ch, i)) { sfx('wrong'); toast('Låst – klar de tidligere steder først'); return; }
     sfx('select');
-    if (i === this.sel && i === this.cur) { startNode(this.ch, i); return; }
+    const wasChest = this.selChest != null;
+    this.selChest = null;
+    if (i === this.sel && i === this.cur) { if (wasChest) { this.panel(); return; } startNode(this.ch, i); return; }
     this.sel = i;
     this.panel();
     this.walkTo(i);
@@ -90,7 +106,23 @@ export class MapScene {
     this.walking = false;
     if (!this.inMenu) this.panel();
   }
+  chestPanel(k) {
+    const cd = this.c.chests[k], open = this.chestState(k) === 'open';
+    const ico = h('canvas', { width: 30, height: 30, class: 'pix node-ico' });
+    const g = ico.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(sprite(open ? 'mapChestOpen' : 'mapChest'), 3, 5, 24, 20);
+    setPanel(
+      h('div', { class: 'area-head' }, h('span', { class: 'spacer' }), h('div', { class: 'area-title' }, h('div', { class: 'area-name' }, this.c.name)), h('span', { class: 'spacer' })),
+      h('div', { class: 'node-card chest' },
+        ico,
+        h('div', { class: 'grow' }, h('div', { class: 'node-name' }, cd.name, open ? ' ✅' : ''),
+          h('div', { class: 'node-desc' }, open ? 'Kisten er tom. Skriftrullen ligger i Krøniken (☰).' : `En gammel kiste med ${cd.locks.length} stavelåse. Indeni: guld, en skriftrulle` + (k === 1 ? ' og en livskrystal 💠.' : ' og en skat.'))),
+      ),
+      open ? null : btn('🔑 Prøv låsene', () => startChest(this.ch, k), 'primary big'),
+      btn('◀ Tilbage til stien', () => { this.selChest = null; this.panel(); }, 'small'),
+    );
+  }
   panel() {
+    if (this.selChest != null) return this.chestPanel(this.selChest);
     const c = this.c, n = c.nodes[this.sel], i = this.sel;
     const mm = mastery(this.ch);
     const done = isDone(this.ch, i);
@@ -133,13 +165,31 @@ export class MapScene {
       ctx.drawImage(sprite(ICON[n.type]), cx - 5, cy - 5);
       ctx.globalAlpha = 1;
       if (dn) ctx.drawImage(sprite('star'), cx + 3, cy - 12);
-      if (i === this.sel && !this.walking) {
+      if (i === this.sel && !this.walking && this.selChest == null) {
         const by = Math.round(Math.sin(t * 6) * 2);
         ctx.fillStyle = '#fcfcfc';
         ctx.fillRect(cx - 3, cy - 22 + by, 7, 2); ctx.fillRect(cx - 2, cy - 20 + by, 5, 2); ctx.fillRect(cx - 1, cy - 18 + by, 3, 2);
       }
     });
+    // skattekister
+    this.m.chests.forEach((p, k) => {
+      const st = this.chestState(k);
+      const cx = p.x * 16 + 8, cy = p.y * 16 + 8;
+      shadow(ctx, cx, cy + 6, 7, 2);
+      if (st === 'ready') glow(ctx, cx, cy, 10 + Math.sin(t * 4) * 2, 'rgba(248,216,120,0.35)');
+      ctx.globalAlpha = st === 'locked' ? 0.55 : 1;
+      ctx.drawImage(sprite(st === 'open' ? 'mapChestOpen' : 'mapChest'), cx - 6, cy - 5 + (st === 'ready' ? Math.round(Math.sin(t * 5)) : 0));
+      ctx.globalAlpha = 1;
+      if (st === 'locked') ctx.drawImage(sprite('thorns'), cx - 7, cy - 3);
+      if (st === 'ready' && Math.sin(t * 3 + k) > 0.6) { ctx.fillStyle = '#fcfcfc'; ctx.fillRect(cx + 4, cy - 8, 1, 3); ctx.fillRect(cx + 3, cy - 7, 3, 1); }
+      if (this.selChest === k) {
+        const by = Math.round(Math.sin(t * 6) * 2);
+        ctx.fillStyle = '#fcfcfc';
+        ctx.fillRect(cx - 3, cy - 18 + by, 7, 2); ctx.fillRect(cx - 2, cy - 16 + by, 5, 2); ctx.fillRect(cx - 1, cy - 14 + by, 3, 2);
+      }
+    });
     const hc = heroCanvas(save.look);
+    shadow(ctx, this.hx, this.hy + 3, 6, 2);
     const bob = this.walking ? Math.round(Math.abs(Math.sin(t * 12)) * -2) : 0;
     const x = Math.round(this.hx - 12), y = Math.round(this.hy - 20 + bob);
     ctx.save();
